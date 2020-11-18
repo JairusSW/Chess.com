@@ -1,6 +1,6 @@
 {
   "name": "Chess.com",
-  "version": "1.0.0",
+  "version": "5.7.9",
   "description": "Chess.com Windows Desktop App Made With Electron.",
   "main": "index.js",
   "scripts": {
