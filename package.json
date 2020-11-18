@@ -1,0 +1,26 @@
+{
+  "name": "Chess.com",
+  "version": "1.0.0",
+  "description": "Chess.com Windows Desktop App Made With Electron.",
+  "main": "index.js",
+  "scripts": {
+    "pack": "npx electron-builder --dir",
+    "dist": "npx electron-builder -mwl"
+  },
+  "author": "JairusSW",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^10.1.2",
+    "electron-builder": "^22.9.1"
+  },
+  "build": {
+    "appId": "1.0.0",
+    "mac": {
+      "category": "Game"
+    },
+    "icon": "public/icon.png"
+  },
+  "dependencies": {
+    "discord-rich-presence": "0.0.8"
+  }
+}
