@@ -4,21 +4,48 @@
   "description": "Chess.com Windows Desktop App Made With Electron.",
   "main": "index.js",
   "scripts": {
-    "pack": "npx electron-builder --dir",
-    "dist": "npx electron-builder -mwl"
+    "start": "electron .",
+    "release": "electron-builder",
+    "test": "echo success"
   },
+  "repository": "https://github.com/SliceWire/Chess.com",
+  "keywords": [
+    "electron",
+    "ci",
+    "travis",
+    "tutorial",
+    "demo"
+  ],
   "author": "JairusSW",
-  "license": "MIT",
-  "devDependencies": {
-    "electron": "^10.1.2",
-    "electron-builder": "^22.9.1"
-  },
   "build": {
-    "appId": "1.0.0",
-    "mac": {
-      "category": "Game"
+    "appId": "5.7.9",
+    "publish": "github",
+    "dmg": {
+      "contents": [
+        {
+          "x": 110,
+          "y": 150
+        },
+        {
+          "x": 240,
+          "y": 150,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ]
+    },
+    "appImage": {
+      "license": "LICENSE"
+    },
+    "nsis": {
+      "createDesktopShortcut": "always",
+      "license": "LICENSE"
     },
     "icon": "icon.png"
+  },
+  "devDependencies": {
+    "electron": "^4.0.1",
+    "electron-builder": "^21.2.0"
   },
   "dependencies": {
     "discord-rich-presence": "0.0.8"
