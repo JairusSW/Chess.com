@@ -1,6 +1,6 @@
 const { app, BrowserWindow, nativeImage } = require('electron')
 
-const image = nativeImage.createFromPath(__dirname + '/logo.png');
+const image = nativeImage.createFromPath(__dirname + '/icon.png');
 
 image.setTemplateImage(true)
 
