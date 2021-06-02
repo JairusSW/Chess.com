@@ -1,16 +1,19 @@
 {
   "name": "Chess.com",
-  "version": "1.0.0",
+  "version": "1.1.1",
   "description": "Chess.com Windows App",
   "main": "index.js",
   "scripts": {
     "pack": "electron-builder --dir",
-    "dist": "electron-builder --win --64"
+    "dist": "electron-builder --win --x64",
+    "distlinux": "electron-builder --linux -x64",
+    "distmac": "electron-builder --mac",
+    "start": "electron . --dev"
   },
   "author": "JairusSW",
   "license": "MIT",
   "devDependencies": {
-    "electron": "^11.0.1",
+    "electron": "^11.4.3",
     "electron-builder": "^22.9.1"
   },
   "build": {
@@ -21,6 +24,10 @@
     "icon": "icon.png"
   },
   "dependencies": {
-    "discord-rich-presence": "0.0.8"
+    "discord-rich-presence": "0.0.8",
+    "dom-to-image": "^2.6.0",
+    "electron-preferences": "^2.2.0",
+    "electron-store": "^8.0.0",
+    "path": "^0.12.7"
   }
 }
