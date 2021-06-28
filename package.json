@@ -1,0 +1,51 @@
+{
+  "name": "Chess.com",
+  "version": "2.0.0",
+  "description": "Chess.com Windows App",
+  "main": "index.js",
+  "scripts": {
+    "start": "electron-forge start",
+    "package": "electron-forge package",
+    "make": "electron-forge make"
+  },
+  "author": "Jairus Tanaka",
+  "license": "MIT",
+  "devDependencies": {
+    "@electron-forge/cli": "^6.0.0-beta.57",
+    "@electron-forge/maker-deb": "^6.0.0-beta.57",
+    "@electron-forge/maker-rpm": "^6.0.0-beta.57",
+    "@electron-forge/maker-squirrel": "^6.0.0-beta.57",
+    "@electron-forge/maker-zip": "^6.0.0-beta.57",
+    "electron": "^13.1.4",
+    "electron-wix-msi": "^3.2.0"
+  },
+  "contributors": [
+    "John Iannandrea"
+  ],
+  "dependencies": {
+    "discord-rich-presence": "0.0.8",
+    "discord-rpc": "^4.0.1",
+    "dom-to-image": "^2.6.0",
+    "electron-preferences": "^2.2.0",
+    "electron-store": "^8.0.0",
+    "path": "^0.12.7"
+  },
+  "config": {
+    "forge": {
+      "packagerConfig": {
+        "name": "Chess.com",
+        "icon": "img\\icon.ico"
+      },
+      "makers": [
+        {
+          "name": "@electron-forge/maker-squirrel",
+          "config": {
+            "name": "Chess.com",
+            "authors": "Jairus Tanaka",
+            "setupIcon": "img\\icon.ico"
+          }
+        }
+      ]
+    }
+  }
+}
