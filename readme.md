@@ -1,4 +1,4 @@
-# Chess.com Desktop Application
+# Chess.com Desktop App
 Run chess.com on your desktop
 
 ## Features
@@ -8,7 +8,11 @@ Run chess.com on your desktop
 
 - Discord status
 - Notifications for live games, online play, and events
+- Settings and board streaming
 
+## Installation
+[Click here](https://github.com/JairusSW/Chess.com/releases/tag/2.0.2) (v2.0.2) for the latest release.
+To do it manually, go to the releases page and download.
 ## Developing
 
 ### Run
@@ -16,11 +20,14 @@ Run chess.com on your desktop
 $ npm install
 $ npm start
 ```
-
+##### Developer Mode
+```
+$ electron . --dev
+```
 ### Distribute
 
 ```
-$ npm run dist
+$ npm run make
 ```
 
 
