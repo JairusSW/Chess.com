@@ -4,10 +4,23 @@
   "description": "Chess.com Desktop App",
   "main": "index.js",
   "scripts": {
-    "start": "electron-forge start",
-    "package": "electron-forge package",
-    "make": "electron-forge make"
+    "start": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder",
+    "dev": "electron . --dev"
   },
+  "build": {
+    "icon": "./icon.png"
+  },
+  "buildResources": {
+    "icon": "./icon.png"
+  },
+  "files": [
+    "./icon.png",
+    "*.*",
+    "**/*",
+    "build/icon.*"
+  ],
   "author": "Jairus Tanaka",
   "license": "MIT",
   "devDependencies": {
@@ -17,6 +30,7 @@
     "@electron-forge/maker-squirrel": "^6.0.0-beta.57",
     "@electron-forge/maker-zip": "^6.0.0-beta.57",
     "electron": "^15.3.0",
+    "electron-builder": "^22.13.1",
     "electron-wix-msi": "^3.2.0"
   },
   "contributors": [
@@ -28,7 +42,8 @@
     "dom-to-image": "^2.6.0",
     "electron-preferences": "^2.2.0",
     "electron-store": "^8.0.0",
-    "path": "^0.12.7"
+    "path": "^0.12.7",
+    "ws": "^8.2.3"
   },
   "config": {
     "forge": {

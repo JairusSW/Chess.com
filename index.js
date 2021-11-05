@@ -7,6 +7,10 @@ const {
   ipcMain,
   screen,
 } = require("electron");
+const WebSocket = require('ws')
+const ws = new WebSocket.Server({
+  port: 9421
+});
 const Discord = require("discord-rpc");
 const rpc = new Discord.Client({ transport: "ipc" });
 const path = require("path");
@@ -418,7 +422,7 @@ ipcMain.on("board-change", (event, html) => {
 
   console.log("Showing popup");
 
-  popup.webContents.send("board-update", html);
+  ws.clients.forEach(c => c.send(`board-update:${html}`))
 
   popup.on("close", function (event) {
     popup = null;
@@ -458,6 +462,14 @@ function updatePresence(url) {
     if (url.pathname == "/home") {
       client.setActivity({
         state: "Watching Home Screen",
+        startTimestamp: new Date(),
+        largeImageKey: "logo",
+        smallImageKey: "logo1",
+        instance: true,
+      });
+    } else if (url.pathname == "/daily-chess-puzzle") {
+      client.setActivity({
+        state: "Daily Puzzle",
         startTimestamp: new Date(),
         largeImageKey: "logo",
         smallImageKey: "logo1",
