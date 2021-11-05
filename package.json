@@ -1,7 +1,7 @@
 {
   "name": "Chess.com",
-  "version": "2.0.0",
-  "description": "Chess.com Windows App",
+  "version": "2.0.2",
+  "description": "Chess.com Desktop App",
   "main": "index.js",
   "scripts": {
     "start": "electron-forge start",
@@ -16,7 +16,7 @@
     "@electron-forge/maker-rpm": "^6.0.0-beta.57",
     "@electron-forge/maker-squirrel": "^6.0.0-beta.57",
     "@electron-forge/maker-zip": "^6.0.0-beta.57",
-    "electron": "^13.1.4",
+    "electron": "^15.3.0",
     "electron-wix-msi": "^3.2.0"
   },
   "contributors": [

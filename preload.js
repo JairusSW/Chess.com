@@ -1,87 +1,83 @@
 // preload for chess.com
 
-const { ipcRenderer } = require('electron');
-const domtoimage = require('dom-to-image');
+const { ipcRenderer } = require("electron");
+const domtoimage = require("dom-to-image");
 
-document.__defineGetter__("visibilityState", () => "visible")
-document.__defineGetter__("hidden", () => false)
+document.__defineGetter__("visibilityState", () => "visible");
+document.__defineGetter__("hidden", () => false);
 
-console.log('Chess.com desktop script injected successfuly')
+console.log("Chess.com Desktop App Launched");
 
-// Gather all chess boards in current view so we can determine someone has made a move
-var mutationObservers = [];
-var watching = false; //AnimationType
+let watching = true; //AnimationType
 
-function watchBoard(toWatch) {
+function findBoards() {
+  return (
+    document.getElementsByTagName("chess-board")[0] ||
+    document.getElementById("game-board") ||
+    document.getElementById("board-board")
+  );
+}
 
-    var mutationObserver = new MutationObserver((mutation) => {
+let firstTime = true
 
-        if (mutation[0].target.closest('.dragging')) return; // moving
+let coordinates = null;
 
-        var board = mutation[0].target.closest('.layout-board-section') || 
-                    mutation[0].target.closest('#board-layout-main') || 
-                    mutation[0].target.closest('.game-board-component') || 
-                    mutation[0].target.closest('.main-tab-game-board-container');
-        if (!board) return;
-        
-        domtoimage.toPng(board, { style: {left: '0', top: '0'}}).then(function (dataUrl) {
-            ipcRenderer.send('board-change', dataUrl);
-        });
+function hideCoordinates() {
+  const node = document.getElementsByClassName("coordinates outside")[0];
+  coordinates = node;
+  if (node) node.remove();
+}
 
-        // kill any instance of this as it wont go away when window isnt in focus
-        if (modals = document.getElementsByClassName('board-dialog-component')) for (var i = 0; i < modals.length; i++) modals[i].remove();
+function showCoordinates() {
+  findBoards().append(coordinates);
+}
 
+function updateBoard(board) {
+  console.log("Updating board...");
+  hideCoordinates();
+  domtoimage
+    .toPng(board, {
+      style: { left: "0", top: "0", bottom: "0", right: "0" },
+    })
+    .then(function (dataUrl) {
+      console.log("Updated board.");
+      ipcRenderer.send("board-change", dataUrl);
+      showCoordinates();
     });
-    mutationObserver.observe(toWatch, {
-        /*attributes: true,
-        characterData: true,*/
-        childList: true,
-        subtree: true,
-        /*attributeOldValue: true,
-        characterDataOldValue: true*/
-    });
-    mutationObservers.push(mutationObserver);
+  // kill any instance of this as it wont go away when window isnt in focus
+  if ((modals = document.getElementsByClassName("board-dialog-component")))
+    for (var i = 0; i < modals.length; i++) modals[i].remove();
 }
 
-
-function enableBoardObservers() {
-    watching = true;
-    console.log('observing board changes');
-
-    var boards = document.getElementsByTagName("chess-board");
-    for (var i = 0; i < boards.length; i++) watchBoard(boards[i])
-
-    if (document.getElementById('game-board')) watchBoard(document.getElementById('game-board'))
-
-    var eventBoards = document.getElementsByClassName('game-board-component');
-    for (var i = 0; i < eventBoards.length; i++) watchBoard(eventBoards[i]);
-    
-    console.log("board observers", mutationObservers);
+function watchBoard() {
+  console.log("Watching board");
+  const obs = new MutationObserver((mutations) => {
+    for (const mut of mutations) {
+      if (mut.target.closest(".dragging")) return;
+        if (
+            mut.addedNodes[0] === coordinates ||
+            mut.removedNodes[0] === coordinates
+        ) {
+            return;
+        }
+      }
+      if (firstTime) {
+          firstTime = !firstTime
+          return
+      }
+    console.log("Piece changed.");
+    updateBoard(findBoards());
+  });
+  obs.observe(findBoards(), {
+    attributes: true,
+    //characterData: true,
+    childList: true,
+    subtree: true,
+    //attributeOldValue: true,
+    //characterDataOldValue: true
+  });
 }
-
-function disableBoardObservers() {
-    watching = false;
-    console.log('disabling observers');
-
-    for (var i = 0; i < mutationObservers.length; i++) {
-        mutationObservers[i].disconnect();
-        delete mutationObservers[i];
-    }
-    mutationObservers = [];
-}
-
-ipcRenderer.on('minimized', () => {
-    enableBoardObservers();
-});
-
-ipcRenderer.on('visible', () => {
-    disableBoardObservers();
-});
-
-// regrab observers when in page url changes
-ipcRenderer.on('refresh-watchers', () => {
-    if (watching) {
-        disableBoardObservers();
-        enableBoardObservers();
-    }
-});
+onload = () => {
+  console.log(findBoards());
+  watchBoard(findBoards());
+};
