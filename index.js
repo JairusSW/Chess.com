@@ -323,7 +323,7 @@ function createWindow() {
 
   win.on("focus", () => {
     // clear any notification text
-    appIcon.setToolTip("Chess.com");
+    if (appIcon) appIcon.setToolTip("Chess.com");
   });
 
   // proper quit
