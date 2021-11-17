@@ -1,15 +1,17 @@
+require("v8-compile-cache");
+const needle = require("needle");
 const {
   app,
   BrowserWindow,
   nativeImage,
   Tray,
   Menu,
-  ipcMain,
   screen,
+  session,
 } = require("electron");
-const WebSocket = require('ws')
+const WebSocket = require("ws");
 const ws = new WebSocket.Server({
-  port: 9421
+  port: 9421,
 });
 const Discord = require("discord-rpc");
 const rpc = new Discord.Client({ transport: "ipc" });
@@ -36,170 +38,10 @@ const image = nativeImage.createFromPath(__dirname + "/icon.png");
 
 image.setTemplateImage(true);
 
-let hiddenWindow = null;
 let win = null;
 let lastSendUrl = "/";
 
 app.commandLine.appendSwitch("disable-renderer-backgrounding");
-
-function createWindow() {
-  let lastSize = store.get("windowSize");
-  win = new BrowserWindow({
-    show: !process.argv.includes("--hidden"),
-    width: lastSize[0],
-    height: lastSize[1],
-    webPreferences: {
-      nodeIntegration: preferences.preferences.board.show_chessboard_on,
-      backgroundThrottling: false, // better boardstate
-      webSecurity: true,
-      enableRemoteModule: false,
-      contextIsolation: true, // so web contents cant access electrons api
-      webgl: false,
-      preload: preferences.preferences.board.show_chessboard_on
-        ? path.join(__dirname, "preload.js")
-        : null,
-    },
-    icon: image,
-  });
-
-  if (!process.argv.includes("--dev")) {
-    win.setMenu(null);
-  } else {
-    win.webContents.openDevTools();
-  }
-
-  if (preferences.preferences.general.persistant_url) {
-    // check annoying edge case were you actually leave chess.com XD
-    console.log(new URL(store.get("lastUrl")).origin);
-    if (new URL(store.get("lastUrl")).origin != "https://www.chess.com")
-      win.loadURL("https://www.chess.com");
-    else win.loadURL(store.get("lastUrl"));
-  } else win.loadURL("https://www.chess.com/");
-
-  win.on("resized", () => {
-    store.set("windowSize", win.getSize());
-  });
-
-  // keep contents in same window
-  win.webContents.on("new-window", function (e, url) {
-    console.log("new-window " + url);
-    e.preventDefault();
-    win.loadURL(url);
-    lastSendUrl = url;
-    if (preferences.preferences.general.persistant_url)
-      store.set("lastUrl", url);
-    updatePresence(url); //hiddenWindow.webContents.send("navigated", url, win.getTitle());
-  });
-
-  win.webContents.on("did-navigate-in-page", function (event, url) {
-    console.log("did-navigate-in-page " + url);
-    lastSendUrl = url;
-    if (preferences.preferences.general.persistant_url)
-      store.set("lastUrl", url);
-    updatePresence(url); //hiddenWindow.webContents.send("navigated", url, win.getTitle());
-    win.webContents.send("refresh-watchers");
-  });
-
-  win.webContents.on(
-    "did-navigate",
-    (event, url, httpResponseCode, httpStatusCode) => {
-      console.log("did-navigate " + url);
-      lastSendUrl = url;
-      if (preferences.preferences.general.persistant_url)
-        store.set("lastUrl", url);
-      updatePresence(url); //hiddenWindow.webContents.send("navigated", url, win.getTitle());
-    }
-  );
-
-  // minimize to tray
-  win.on("minimize", function (event) {
-    event.preventDefault();
-    win.hide();
-    //win.webContents.setAudioMuted(true);
-    //hiddenWindow.webContents.send("navigated", "https://chess.com/");
-    updatePresence("https://chess.com/");
-    win.webContents.send("minimized");
-  });
-  win.on("close", function (event) {
-    event.preventDefault();
-    win.hide();
-    //win.webContents.setAudioMuted(true);
-    //hiddenWindow.webContents.send("navigated", "https://chess.com/");
-    updatePresence("https://chess.com/");
-    win.webContents.send("closed");
-  });
-
-  win.on("show", () => {
-    //win.webContents.setAudioMuted(false);
-    //hiddenWindow.webContents.send("navigated", lastSendUrl);
-    updatePresence(lastSendUrl);
-    win.webContents.send("visible");
-  });
-
-  win.on("focus", () => {
-    // clear any notification text
-    appIcon.setToolTip("Chess.com");
-  });
-
-  // proper quit
-  win.on("close", function (event) {
-    app.isQuiting = true;
-    app.quit();
-    process.exit(0);
-  });
-
-  //win.on('focus', () => win.flashFrame(false));
-}
-
-function createTrayIcon() {
-  appIcon = new Tray(image);
-  let contextMenu = Menu.buildFromTemplate([
-    {
-      label: "Show",
-      click: function () {
-        win.show();
-      },
-    },
-    {
-      label: "Settings",
-      click: function () {
-        preferences.show();
-      },
-    },
-    {
-      label: "Quit",
-      click: function () {
-        app.isQuiting = true;
-        app.quit();
-      },
-    },
-    {
-      label: "Restart",
-      click: function () {
-        app.relaunch();
-        app.exit();
-      },
-    },
-  ]);
-  appIcon.setToolTip("Chess.com");
-  appIcon.setContextMenu(contextMenu);
-
-  appIcon.on("click", function (e) {
-    if (win.isVisible()) {
-      win.hide();
-    } else {
-      win.show();
-      if (popup) popup.hide();
-    }
-  });
-}
-
-ipcMain.on("notification", (title, options) => {
-  if (win.isFocused()) return;
-  appIcon.setToolTip(`•  ${options.name}`);
-});
-
-console.log(path.resolve(app.getPath("userData"), "preferences.json"));
 
 const preferences = new ElectronPreferences({
   dataStore: path.resolve(app.getPath("userData"), "preferences.json"),
@@ -219,6 +61,9 @@ const preferences = new ElectronPreferences({
       show_chessboard_when: "tray",
       show_chessboard_time: 10,
       show_chessboard_size: 300,
+    },
+    ad: {
+      block: false,
     },
   },
   sections: [
@@ -306,15 +151,14 @@ const preferences = new ElectronPreferences({
             label: "Chess Board Settings",
             fields: [
               {
-                label:
-                  "Chessboard popup (requires program restart to take effect)",
+                label: "Chessboard popup",
                 key: "show_chessboard_on",
                 type: "radio",
                 options: [
                   { label: "Show chessboard popup", value: true },
-                  { label: "Dont show chessboard popup", value: false },
+                  { label: "Don't show chessboard popup", value: false },
                 ],
-                help: "This popup will show the current board state.",
+                help: "This popup will show the current board state. (May slow down app performance)",
               },
               {
                 label: "When to show",
@@ -348,13 +192,229 @@ const preferences = new ElectronPreferences({
         ],
       },
     },
+    {
+      id: "ad",
+      label: "Advertisements",
+      form: {
+        groups: [
+          {
+            label: "Advertisement Settings",
+            fields: [
+              {
+                label: "Ad Blocker",
+                key: "block",
+                type: "radio",
+                options: [
+                  { label: "Block ads", value: true },
+                  { label: "Don't block ads", value: false },
+                ],
+                help: "Whether to block ads on chess.com or not.",
+              },
+            ],
+          },
+        ],
+      },
+    },
   ],
 });
 
-app.whenReady().then((d) => {
-  createWindow(d);
+function createWindow() {
+  let lastSize = store.get("windowSize");
+  win = new BrowserWindow({
+    show: !process.argv.includes("--hidden"),
+    width: lastSize[0],
+    height: lastSize[1],
+    webPreferences: {
+      nodeIntegration: false,
+      backgroundThrottling: false, // better boardstate
+      webSecurity: true,
+      enableRemoteModule: false,
+      contextIsolation: true, // so web contents cant access electrons api
+      webgl: true,
+      preload: path.join(__dirname, "preload.js"),
+    },
+    icon: image,
+  });
 
-  createTrayIcon();
+  // Block ads
+  if (preferences.preferences.ad.block) {
+    //console.log("Blocking ads");
+    win.webContents.session.webRequest.onBeforeRequest(
+      {
+        urls: [
+          "https://www.chess.com/bundles/app/js/chess-ads.client.142f48ee.js",
+        ],
+      },
+      (details, response) => {
+        response({ cancel: true });
+      }
+    );
+  }
+
+  if (!process.argv.includes("--dev")) {
+    win.setMenu(null);
+  } else {
+    win.webContents.openDevTools();
+  }
+
+  if (preferences.preferences.general.persistant_url) {
+    // check annoying edge case were you actually leave chess.com XD
+    //console.log(new URL(store.get("lastUrl")).origin);
+    if (new URL(store.get("lastUrl")).origin != "https://www.chess.com")
+      win.loadURL("https://www.chess.com");
+    else win.loadURL(store.get("lastUrl"));
+  } else win.loadURL("https://www.chess.com/");
+
+  win.on("resized", () => {
+    store.set("windowSize", win.getSize());
+  });
+
+  // keep contents in same window
+  win.webContents.on("new-window", function (e, url) {
+    //console.log("new-window " + url);
+    e.preventDefault();
+    win.loadURL(url);
+    lastSendUrl = url;
+    if (preferences.preferences.general.persistant_url)
+      store.set("lastUrl", url);
+    updatePresence(url); //hiddenWindow.webContents.send("navigated", url, win.getTitle());
+  });
+
+  win.webContents.on("did-navigate-in-page", function (event, url) {
+    //console.log("did-navigate-in-page " + url);
+    lastSendUrl = url;
+    if (preferences.preferences.general.persistant_url)
+      store.set("lastUrl", url);
+    updatePresence(url);
+  });
+
+  win.webContents.on(
+    "did-navigate",
+    (event, url, httpResponseCode, httpStatusCode) => {
+      //console.log("did-navigate " + url);
+      lastSendUrl = url;
+      if (preferences.preferences.general.persistant_url)
+        store.set("lastUrl", url);
+      updatePresence(url); //hiddenWindow.webContents.send("navigated", url, win.getTitle());
+    }
+  );
+
+  // minimize to tray
+  win.on("minimize", function (event) {
+    event.preventDefault();
+    win.hide();
+    //win.webContents.setAudioMuted(true);
+    //hiddenWindow.webContents.send("navigated", "https://chess.com/");
+    updatePresence("https://chess.com/");
+  });
+  win.on("close", function (event) {
+    event.preventDefault();
+    win.hide();
+    //win.webContents.setAudioMuted(true);
+    //hiddenWindow.webContents.send("navigated", "https://chess.com/");
+    updatePresence("https://chess.com/");
+  });
+
+  win.on("show", () => {
+    //win.webContents.setAudioMuted(false);
+    //hiddenWindow.webContents.send("navigated", lastSendUrl);
+    updatePresence(lastSendUrl);
+  });
+
+  win.on("focus", () => {
+    // clear any notification text
+    appIcon.setToolTip("Chess.com");
+  });
+
+  // proper quit
+  win.on("close", function (event) {
+    app.isQuiting = true;
+    app.quit();
+    process.exit(0);
+  });
+
+  //win.on('focus', () => win.flashFrame(false));
+}
+
+function createTrayIcon() {
+  appIcon = new Tray(image);
+  let contextMenu = Menu.buildFromTemplate([
+    {
+      label: "Show",
+      click: function () {
+        win.show();
+      },
+    },
+    {
+      label: "Settings",
+      click: function () {
+        preferences.show();
+      },
+    },
+    {
+      label: "Quit",
+      click: function () {
+        app.isQuiting = true;
+        app.quit();
+      },
+    },
+    {
+      label: "Restart",
+      click: function () {
+        app.relaunch();
+        app.exit();
+      },
+    },
+  ]);
+  appIcon.setToolTip("Chess.com");
+  appIcon.setContextMenu(contextMenu);
+
+  appIcon.on("click", function (e) {
+    if (win.isVisible()) {
+      win.hide();
+    } else {
+      win.show();
+      if (popup) popup.hide();
+    }
+  });
+}
+
+//console.log(path.resolve(app.getPath("userData"), "preferences.json"));
+function isInternet() {
+  return new Promise(async (resolve, reject) => {
+    needle("https://chess.com/")
+      .then((req) => {
+        resolve(req.statusCode);
+      })
+      .catch(() => {
+        resolve(401);
+      });
+  });
+}
+function waitForInternet() {
+  return new Promise(async (resolve, reject) => {
+    let code = await isInternet();
+    if (code >= 400) {
+      //console.log("Not Connected " + code);
+      setInterval(async () => {
+        if (code < 400) {
+          resolve();
+          //console.log("Connected to internet " + code);
+        } else {
+          //console.log("Not Connected " + code);
+          code = await isInternet();
+        }
+      }, 1000 * 5);
+    } else {
+      //console.log("Connected to internet " + code);
+      resolve();
+    }
+  });
+}
+app.whenReady().then(async (d) => {
+  waitForInternet().then(() => createWindow(d));
+
+  waitForInternet().then(() => createTrayIcon());
 });
 
 app.on("window-all-closed", () => {
@@ -365,7 +425,7 @@ app.on("window-all-closed", () => {
 
 app.on("activate", () => {
   if (BrowserWindow.getAllWindows().length === 0) {
-    createWindow();
+    waitForInternet().then(() => createWindow());
   }
 });
 
@@ -384,62 +444,67 @@ function setStartupState(open) {
 
 let popup = null;
 let popupTimeout = null;
-ipcMain.on("board-change", (event, html) => {
-  console.log("Update board");
-  if (!preferences.preferences.board.show_chessboard_on) return;
-  clearTimeout(popupTimeout);
-  if (!(preferences.preferences.board.show_chessboard_when == "always")) {
-    if (preferences.preferences.board.show_chessboard_when == "tray") {
-      if (!win.isMinimized()) return;
-    } else if (preferences.preferences.board.show_chessboard_when == "blur") {
-      if (win.isFocused()) return;
+ws.on("connection", (c) => {
+  c.send(`config:${JSON.stringify(preferences.preferences)}`);
+  c.on("message", (msg) => {
+    const message = msg.toString();
+    if (message.startsWith("board-change:")) {
+      boardURL = message.replace("board-change:", "");
+      //console.log("Update board");
+      if (!preferences.preferences.board.show_chessboard_on) return;
+      clearTimeout(popupTimeout);
+      if (!(preferences.preferences.board.show_chessboard_when == "always")) {
+        if (preferences.preferences.board.show_chessboard_when == "tray") {
+          if (!win.isMinimized()) return;
+        } else if (
+          preferences.preferences.board.show_chessboard_when == "blur"
+        ) {
+          if (win.isFocused()) return;
+        }
+      }
+
+      if (!popup) {
+        let display = screen.getPrimaryDisplay();
+        let width = display.bounds.width;
+        let height = display.bounds.height;
+        let popupSize = preferences.preferences.board.show_chessboard_size;
+        popup = new BrowserWindow({
+          frame: false,
+          show: false,
+          width: popupSize,
+          height: popupSize,
+          x: width - (popupSize + 15),
+          y: height - (popupSize + 50),
+          webPreferences: {
+            nodeIntegration: false,
+            contextIsolation: false,
+          },
+          icon: image,
+        });
+        popup.loadFile("./boardStatus.html");
+        popup.setAlwaysOnTop(true, "screen-saver", 1);
+        popup.setSkipTaskbar(true);
+        popup.setResizable(false);
+      } else popup.showInactive();
+
+      //console.log("Showing popup");
+
+      ws.clients.forEach((c) => c.send(`board-update:${boardURL}`));
+
+      popup.on("close", function (event) {
+        popup = null;
+      });
+
+      popup.on("focus", () => {
+        if (popup) popup.hide();
+        win.show();
+      });
+
+      popupTimeout = setTimeout(() => {
+        if (popup) popup.hide();
+      }, preferences.preferences.board.show_chessboard_time * 1000);
     }
-  }
-
-  if (!popup) {
-    let display = screen.getPrimaryDisplay();
-    let width = display.bounds.width;
-    let height = display.bounds.height;
-    let popupSize = preferences.preferences.board.show_chessboard_size;
-    popup = new BrowserWindow({
-      frame: false,
-      show: false,
-      width: popupSize,
-      height: popupSize,
-      x: width - (popupSize + 15),
-      y: height - (popupSize + 50),
-      webPreferences: {
-        nodeIntegration: true,
-        contextIsolation: false,
-      },
-      icon: image,
-    });
-    popup.loadFile("./boardStatus.html");
-    popup.setAlwaysOnTop(true, "screen-saver", 1);
-    popup.setSkipTaskbar(true);
-    popup.setResizable(false);
-  } else popup.showInactive();
-
-  console.log("Showing popup");
-
-  ws.clients.forEach(c => c.send(`board-update:${html}`))
-
-  popup.on("close", function (event) {
-    popup = null;
   });
-
-  win.on("focus", () => {
-    if (popup) popup.hide();
-  });
-
-  popup.on("focus", () => {
-    if (popup) popup.hide();
-    win.show();
-  });
-
-  popupTimeout = setTimeout(() => {
-    if (popup) popup.hide();
-  }, preferences.preferences.board.show_chessboard_time * 1000);
 });
 
 rpc
@@ -447,12 +512,12 @@ rpc
     clientId: "778330525889724476",
   })
   .then((c) => {
-    console.log("Connected to Discord");
-    console.log(preferences);
+    //console.log("Connected to Discord");
+    //console.log(preferences);
     client = c;
   })
   .catch(() => {
-    console.log("Could not connect to Discord");
+    //console.log("Could not connect to Discord");
   });
 
 function updatePresence(url) {
@@ -611,5 +676,5 @@ function updatePresence(url) {
 }
 
 app.on("open-url", (event, url) => {
-  console.log(url);
+  //console.log(url);
 });
