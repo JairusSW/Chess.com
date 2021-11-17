@@ -39,6 +39,7 @@ const image = nativeImage.createFromPath(__dirname + "/icon.png");
 image.setTemplateImage(true);
 
 let win = null;
+let appIcon = null;
 let lastSendUrl = "/";
 
 app.commandLine.appendSwitch("disable-renderer-backgrounding");
