@@ -9,10 +9,18 @@ Run chess.com on your desktop
 - Discord status
 - Notifications for live games, online play, and events
 - Settings and board streaming
+- Ad Blocking (NEW)
 
 ## Installation
-[Click here](https://github.com/JairusSW/Chess.com/releases/tag/2.0.2) (v2.0.2) for the latest release.
+[Click here](https://github.com/JairusSW/Chess.com/releases/tag/2.0.3) (v2.0.3) for the latest release.
 To do it manually, go to the releases page and download.
+Note: You will likely get a warning about an 'unknown app'. Windows does not know what my app is since I have not registered it with them, but it is perfectly safe to use. :)
+
+## Enabling/Disabling Settings
+1. Go to the taskbar and right-click the chess.com icon
+2. Select 'Settings'
+3. Apply the settings
+4. Repeat step 1, but hit 'Restart' to apply settings
 ## Developing
 
 ### Run
@@ -27,11 +35,9 @@ $ electron . --dev
 ### Distribute
 
 ```
-$ npm run make
+$ npm run pack
+$ npm run dist
 ```
-
-
-
 ## Contributing
 
 1. Fork it
