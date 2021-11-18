@@ -1,19 +1,14 @@
 {
   "name": "Chess.com",
-  "version": "2.0.3",
+  "version": "2.0.4",
   "description": "Chess.com Desktop App",
   "main": "index.js",
   "scripts": {
     "start": "electron .",
     "pack": "electron-builder --dir",
-    "dist": "electron-builder",
+    "dist:win": "electron-builder --platform win32 --arch x64",
+    "dist:linux": "electron-builder -l",
     "dev": "electron . --dev"
-  },
-  "build": {
-    "icon": "./icon.png"
-  },
-  "buildResources": {
-    "icon": "./icon.png"
   },
   "files": [
     "./icon.png",
@@ -31,6 +26,7 @@
     "@electron-forge/maker-zip": "^6.0.0-beta.57",
     "electron": "^15.3.0",
     "electron-builder": "^22.13.1",
+    "electron-packager": "^15.4.0",
     "electron-wix-msi": "^3.2.0"
   },
   "contributors": [
@@ -47,21 +43,11 @@
     "v8-compile-cache": "^2.3.0",
     "ws": "^8.2.3"
   },
-  "config": {
-    "forge": {
-      "packagerConfig": {
-        "name": "Chess.com",
-        "icon": "img\\icon.ico"
-      },
-      "makers": [
-        {
-          "name": "@electron-forge/maker-squirrel",
-          "config": {
-            "name": "Chess.com",
-            "authors": "Jairus Tanaka",
-            "setupIcon": "img\\icon.ico"
-          }
-        }
+  "build": {
+    "icon": "./icon.png",
+    "win": {
+      "target": [
+        {"target": "nsis", "arch": ["x64", "ia32"]}
       ]
     }
   }

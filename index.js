@@ -395,9 +395,10 @@ function waitForInternet() {
     let code = await isInternet();
     if (code >= 400) {
       //console.log("Not Connected " + code);
-      setInterval(async () => {
+      const int = setInterval(async () => {
         if (code < 400) {
           resolve();
+          clearInterval(int)
           //console.log("Connected to internet " + code);
         } else {
           //console.log("Not Connected " + code);
