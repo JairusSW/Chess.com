@@ -1,4 +1,5 @@
-name: CIon:
+name: CI
+on:
   push:
     branches:
       - electronjobs:
