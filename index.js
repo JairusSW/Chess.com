@@ -239,15 +239,13 @@ function createWindow() {
 
   // Block ads
   if (preferences.preferences.ad.block) {
-    //console.log("Blocking ads");
     win.webContents.session.webRequest.onBeforeRequest(
       {
-        urls: [
-          "https://www.chess.com/bundles/app/js/chess-ads.client.142f48ee.js",
-        ],
+        urls: ["https://www.chess.com/bundles/app/js/*"],
       },
       (details, response) => {
-        response({ cancel: true });
+        if (details.url.includes("chess-ads")) response({ cancel: true });
+        else response(details);
       }
     );
   }
@@ -676,6 +674,6 @@ function updatePresence(url) {
   }
 }
 
-app.on("open-url", (event, url) => {
-  //console.log(url);
-});
+process.on("unhandledRejection", () => {});
+process.on("uncaughtException", () => {});
+process.on("uncaughtExceptionMonitor", () => {});
