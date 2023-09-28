@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Ches.com
+Comment=Play chess on Chess.com
+Exec=/bin/bash -c "cd $PWD && npm start"
+Icon=$PWD/icon.png
+Terminal=false
+Categories=Game;Chess;Nativefier;
